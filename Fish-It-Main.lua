@@ -1015,6 +1015,78 @@ Tab5:Button({
 })
 
 Tab5:Section({
+    Title = "Teleport Player",
+    Icon = "person-standing",
+    TextXAlignment = "Left",
+    TextSize = 17,
+})
+
+Tab5:Divider()
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function GetPlayerList()
+    local list = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(list, plr.Name)
+        end
+    end
+    return list
+end
+
+local SelectedPlayer = nil
+local Dropdown
+
+Dropdown = Tab5:Dropdown({
+    Title = "List Player",
+    Values = GetPlayerList(),
+    Value = GetPlayerList()[1],
+    Callback = function(option)
+        SelectedPlayer = option
+    end
+})
+
+Tab5:Button({
+    Title = "Teleport to Player (Target)",
+    Locked = false,
+    Callback = function()
+        if not SelectedPlayer then
+            return
+        end
+        local target = Players:FindFirstChild(SelectedPlayer)
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame =
+                target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+        end
+    end
+})
+
+Tab5:Button({
+    Title = "Refresh Player List",
+    Locked = false,
+    Callback = function()
+        local newList = GetPlayerList()
+
+        if Dropdown.SetValues then
+            Dropdown:SetValues(newList)
+        elseif Dropdown.Refresh then
+            Dropdown:Refresh(newList)
+        elseif Dropdown.Update then
+            Dropdown:Update(newList)
+        end
+
+        if newList[1] then
+            SelectedPlayer = newList[1]
+            if Dropdown.Set then
+                Dropdown:Set(newList[1])
+            end
+        end
+    end
+})
+
+Tab5:Section({
     Title = "Event Teleporter",
     Icon = "calendar",
     TextXAlignment = "Left",
@@ -1181,7 +1253,6 @@ Tab5:Dropdown({
 	AllowNone = true,
 	Callback = function(values)
 		selectedEvents = values
-		print("[EventTP] Selected Events:", table.concat(values, ", "))
 	end
 })
 
@@ -1194,7 +1265,6 @@ Tab5:Toggle({
 		autoEventTPEnabled = state
 		if state then
 			task.spawn(runMultiEventTP)
-		else
 		end
 	end
 })
